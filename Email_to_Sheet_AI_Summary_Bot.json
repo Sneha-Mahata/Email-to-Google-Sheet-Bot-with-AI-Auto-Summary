@@ -1,0 +1,339 @@
+{
+  "name": "Email-to-Sheet AI Summary Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ce4f7be6-9211-4cae-8c6c-b77476250b35",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JGKHf4HzZ2rcijJd",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "42d259c3-9bc6-44b7-8b6b-e354bc40c32a",
+              "name": "=sender",
+              "value": "={{ $json.From }}",
+              "type": "string"
+            },
+            {
+              "id": "379ed09f-fee4-4e92-a33c-988061759fcd",
+              "name": "=subject",
+              "value": "={{ $json.Subject }}",
+              "type": "string"
+            },
+            {
+              "id": "25138165-1614-48b0-afa6-b345d11c09d9",
+              "name": "body",
+              "value": "={{ $json.snippet }}",
+              "type": "string"
+            },
+            {
+              "id": "e31a52a7-20cb-451f-9afb-89dca71ccb36",
+              "name": "=timestamp",
+              "value": "={{ $now }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ],
+      "id": "971b49f3-21fa-431f-846f-e8e570b97f33",
+      "name": "Extract Email Data"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an AI assistant that summarizes emails and extracts action items. Format your response as JSON with two fields: 'summary' (a 3-sentence summary) and 'actionItems' (a list of action items or 'None' if none exist). \n\nSummarize this email in 3 sentences and extract action items (if any): {{$node[\"Extract Email Data\"].json.body}}",
+              "role": "system"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        440,
+        0
+      ],
+      "id": "1e9a0188-b038-46e3-a018-1fb419fcab7c",
+      "name": "Summarize",
+      "credentials": {
+        "openAiApi": {
+          "id": "6LoLnf9alD9MdRaG",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1gpYAkNK142lL9HfxuTNhEEDkBQDLY83SnJrjQKZdUN4",
+          "mode": "list",
+          "cachedResultName": "Email Summaries",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1gpYAkNK142lL9HfxuTNhEEDkBQDLY83SnJrjQKZdUN4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1gpYAkNK142lL9HfxuTNhEEDkBQDLY83SnJrjQKZdUN4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Sender": "={{ $('Extract Email Data').item.json.sender }}",
+            "Subject": "={{ $('Extract Email Data').item.json.subject }}",
+            "Summary": "={{ $json.summary }}",
+            "Action Items": "={{ $json.actionItems }}",
+            "Timestamp": "={{ $now }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Sender",
+              "displayName": "Sender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Action Items",
+              "displayName": "Action Items",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1520,
+        0
+      ],
+      "id": "508537c6-b68d-47a0-a3b8-f7053c9372b8",
+      "name": "Logging into Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KRWbUFHDY3QnIaSR",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const parsedData = $input.all().map((item) => JSON.parse(item.json.parsed));\n\nreturn parsedData;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1240,
+        0
+      ],
+      "id": "0530cf5f-676e-4cc1-8de2-74118dd07acb",
+      "name": "Handling parsed data"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f0d2ba91-23bc-4703-b098-ee6590987278",
+              "name": "parsedContent",
+              "value": "={{ $json.message.content.replace(/```json|```/g, '').trim() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        800,
+        0
+      ],
+      "id": "1b8a17ea-4a95-4682-95f6-214b270b35bd",
+      "name": "Extracting response"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f4ed3016-bc47-4709-a5c9-62badfc547aa",
+              "name": "parsed",
+              "value": "={{ JSON.parse($json.parsedContent) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1020,
+        0
+      ],
+      "id": "268a78c2-0241-4b4b-b624-a4ea4e1299b2",
+      "name": "JSON parsing"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract Email Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Email Data": {
+      "main": [
+        [
+          {
+            "node": "Summarize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize": {
+      "main": [
+        [
+          {
+            "node": "Extracting response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handling parsed data": {
+      "main": [
+        [
+          {
+            "node": "Logging into Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extracting response": {
+      "main": [
+        [
+          {
+            "node": "JSON parsing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON parsing": {
+      "main": [
+        [
+          {
+            "node": "Handling parsed data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3dd0380a-f07d-46f2-907a-69f315f18fe6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0851b41ba105ce36856aace326ae7112fc3809727ab48ec3ee0a30b399646bfa"
+  },
+  "id": "PZ1Lq86vdpFEols1",
+  "tags": []
+}
